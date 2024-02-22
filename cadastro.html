@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>Cadastro</h2>
+        <form action="/confirmar_cadastro" method="post">
+            {welcome_message}
+            <input id="nome" name="nome" type="text" placeholder="Write your name" required>
+            <input id="email" name="email" type="email" placeholder="Enter with email" value="{login}" required>
+            <input id="senha" name="senha" type="password" placeholder="Password" value="{senha}" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+</body>
+
+</html>
