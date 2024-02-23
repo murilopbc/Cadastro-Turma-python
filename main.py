@@ -62,8 +62,6 @@ class MyMandler(SimpleHTTPRequestHandler):
             login = query_params.get('login',[''])[0]
             senha = query_params.get('senha',[''])[0]
  
-
- 
             welcome_message = f"Olá {login}, seja bem-vindo! Percebemos que você é novo por aqui.Complete seu cadastro"
  
 
@@ -75,17 +73,24 @@ class MyMandler(SimpleHTTPRequestHandler):
             with open(os.path.join(os.getcwd(), 'cadastro.html'),'r', encoding='utf-8') as novo_cadastro_file:
                 content = novo_cadastro_file.read()
  
-       
             content = content.replace('{login}', login)
             content = content.replace('{senha}', senha)
             content = content.replace('{welcome_message}',welcome_message)
  
-               
- 
             self.wfile.write(content.encode('utf-8'))
  
-            return 
-       
+            return
+        
+        elif self.path == '/turma':
+            
+            self.send_response(200)
+            self.send_header("content-type","text/html; charset=utf-8")
+            self.end_headers()
+
+            with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as file:
+                content = file.read()
+            self.wfile.write(content.encode('utf-8'))          
+
         else:
 
             super().do_GET()
@@ -151,6 +156,7 @@ class MyMandler(SimpleHTTPRequestHandler):
                 self.wfile.write(content.encode('utf-8'))
            
             else:
+
                 if any(line.startswith(f"{login};") for line in open("dados.login.txt", "r", encoding="UTF-8")):
                     self.send_response(302)
                     self.send_header('Location', '/login_failed')
@@ -158,11 +164,10 @@ class MyMandler(SimpleHTTPRequestHandler):
                     return # adicionando um return para evitar a execução
                
                 else:
-
-                        self.adicionar_usuario(login,senha, nome='None')
-                        self.send_response(302)
-                        self.send_header('Location', f'novo_cadastro?login={login}&senha={senha}')
-                        self.end_headers()
+                    self.adicionar_usuario(login,senha, nome='None')
+                    self.send_response(302)
+                    self.send_header('Location', f'novo_cadastro?login={login}&senha={senha}')
+                    self.end_headers()
 
  
                 return # adicionando um return para evitar a execução
@@ -211,6 +216,28 @@ class MyMandler(SimpleHTTPRequestHandler):
                     self.send_header("Content-type", "text/html; charset=utf-8")
                     self.end_headers()
                     self.wfile.write("A senha não confere.Retome o procedimento!". encode('utf-8'))
+
+        elif self.path == '/cad_turma':           
+                 
+            content_length = int(self.headers['Content-Length'])
+    
+            body= self.rfile.read(content_length).decode('utf-8')
+            
+            from_data = parse_qs(body, keep_blank_values=True)
+ 
+            codigo = from_data.get('codigo', [''])[0]
+            descricao = from_data.get('descricao', [''])[0]
+
+            with open('dados_turma.txt','r', encoding='utf-8') as file:
+                    lines = file.readlines()
+
+            with open('dados_turma.txt','w', encoding='utf-8') as file:
+                    for line in lines:
+                        stored_codigo, stored_descricao= line.strip().split(';')
+                        if codigo == stored_codigo and descricao == stored_descricao:
+                            line = f"{codigo};{descricao}\n"
+                        file.write(line)
+
         else:
             super(MyMandler,self).do_POST()
  
