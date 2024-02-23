@@ -53,6 +53,24 @@ class MyMandler(SimpleHTTPRequestHandler):
                                       f'<div class="error-message">{mensagem}</div>')
            
      
+            self.wfile.write(content.encode('utf-8')) 
+
+        elif self.path == '/turma_failed':
+
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+           
+
+            with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as login_file:
+                content = login_file.read()
+               
+
+            mensagem = " Turma e/ou atividade já cadastrada. Tente novamente!"
+            content = content.replace('<!-- Mensagem de erro será inserida aqui -->',
+                                      f'<div class="error-message">{mensagem}</div>')
+           
+     
             self.wfile.write(content.encode('utf-8'))  
        
         elif self.path.startswith('/novo_cadastro'):
@@ -109,11 +127,15 @@ class MyMandler(SimpleHTTPRequestHandler):
                         print(stored_senha_hash)
                         return senha_hash == stored_senha_hash
             return False
-   
+
     def adicionar_usuario(self,login,senha,nome):
         senha_hash = hashlib.sha256(senha.encode("UTF-8")).hexdigest()
         with open('dados.login.txt', 'a', encoding='UTF-8') as file:
             file.write(f'{login};{senha_hash};{nome}\n')
+    
+    def adicionar_turmas(self, codigo, descricao):
+        with open('dados_turmas.txt', 'a', encoding='utf-8') as files:
+            files.write(f'{codigo};{descricao}\n')
  
  
     def remover_ultima_linha(self,arquivo):
@@ -219,25 +241,40 @@ class MyMandler(SimpleHTTPRequestHandler):
 
         elif self.path == '/cad_turma':           
                  
-            content_length = int(self.headers['Content-Length'])
-    
-            body= self.rfile.read(content_length).decode('utf-8')
-            
-            from_data = parse_qs(body, keep_blank_values=True)
+            # Obtém o comprimento do corpo da requisição
+            content_length = int(self.headers['content-Length'])
+            # Lê o corpo da requisição
+            body = self.rfile.read(content_length).decode('utf-8')
+            # Parseia os dados do formulário
+            form_data = parse_qs(body, keep_blank_values=True)
  
-            codigo = from_data.get('codigo', [''])[0]
-            descricao = from_data.get('descricao', [''])[0]
+            codigo = form_data.get('codigo', [''])[0]
+            descricao = form_data.get('descricao', [''])[0]
+ 
+            # Adiciona as turmas e obtém a lista atualizada
+            turmas = self.adicionar_turmas(codigo, descricao)
+ 
+            with open('dados_turmas.txt', 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+            
+            with open('dados_turmas.txt','w', encoding='utf-8') as file:
+                for line in lines:
+                    codigo, descricao = line.strip().split(';')
+                    line = f"{codigo};{descricao} \n"
+                    file.write(line)
 
-            with open('dados_turma.txt','r', encoding='utf-8') as file:
-                    lines = file.readlines()
-
-            with open('dados_turma.txt','w', encoding='utf-8') as file:
-                    for line in lines:
-                        stored_codigo, stored_descricao= line.strip().split(';')
-                        if codigo == stored_codigo and descricao == stored_descricao:
-                            line = f"{codigo};{descricao}\n"
-                        file.write(line)
-
+            if any(line.startswith(f"{codigo};") for line in open("dados_turmas.txt", "r", encoding="UTF-8")):
+                self.send_response(302)
+                self.send_header('Location', '/turma')
+                self.end_headers()
+                return
+        
+            else:            
+                self.adicionar_turmas(codigo,descricao)
+                self.send_response(302)
+                self.send_header("Content-type", "text/html; charset=utf-8")
+                self.end_headers()
+               
         else:
             super(MyMandler,self).do_POST()
  
