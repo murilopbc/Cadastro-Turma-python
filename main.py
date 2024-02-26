@@ -256,19 +256,16 @@ class MyMandler(SimpleHTTPRequestHandler):
 
         elif self.path == '/cad_turma':           
                  
-            # Obtém o comprimento do corpo da requisição
             content_length = int(self.headers['content-Length'])
 
             body = self.rfile.read(content_length).decode('utf-8')
           
             form_data = parse_qs(body)
  
+            codigo = form_data.get('codigo', [''])[0]
+            descricao = form_data.get('descricao', [''])[0]
            
-            # verifica se o usuario já existe
-            login = form_data.get('codigo', [''])[0]
-            senha = form_data.get('descricao', [''])[0]
-           
-            if self.usuario_existente(login, senha):
+            if self.usuario_existente(codigo, descricao):
                 with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as existe:
                     content_file = existe.read()
                 mensagem = f"Turma e/ou atividade já cadastrada. Tente novamente!"
@@ -283,18 +280,17 @@ class MyMandler(SimpleHTTPRequestHandler):
            
             else:
 
-                if any(line.startswith(f"{login};") for line in open("dados_turmas.txt", "r", encoding="UTF-8")):
+                if any(line.startswith(f"{codigo};") for line in open("dados_turmas.txt", "r", encoding="UTF-8")):
                     self.send_response(302)
                     self.send_header('Location', '/turma_failed')
                     self.end_headers()
                     return # adicionando um return para evitar a execução
                
                 else:
-                    self.adicionar_turmas(login,senha)
+                    self.adicionar_turmas(codigo,descricao)
                     self.send_response(302)
                     self.send_header('Location', '/login')
                     self.end_headers()
-
                
         else:
             super(MyMandler,self).do_POST()
