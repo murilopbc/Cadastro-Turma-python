@@ -127,6 +127,21 @@ class MyMandler(SimpleHTTPRequestHandler):
                         print(stored_senha_hash)
                         return senha_hash == stored_senha_hash
             return False
+    
+    def turma_existente(self, codigo, descricao):
+        #verifica se o codigo já existe
+            with open('dados_turmas.txt', 'r', encoding='utf-8') as file:
+                for line in file:
+                    if line.strip():
+                        cod, desc = line.strip().split(';')
+                    if codigo == cod:
+                        print("Cheguei aqui significando que localizei o login informado.")
+                        print("senha:" + descricao)
+                        print("senha_armazenada:" + descricao)
+                        print(desc)
+                        return True
+            return False
+
 
     def adicionar_usuario(self,login,senha,nome):
         senha_hash = hashlib.sha256(senha.encode("UTF-8")).hexdigest()
@@ -243,37 +258,43 @@ class MyMandler(SimpleHTTPRequestHandler):
                  
             # Obtém o comprimento do corpo da requisição
             content_length = int(self.headers['content-Length'])
-            # Lê o corpo da requisição
-            body = self.rfile.read(content_length).decode('utf-8')
-            # Parseia os dados do formulário
-            form_data = parse_qs(body, keep_blank_values=True)
- 
-            codigo = form_data.get('codigo', [''])[0]
-            descricao = form_data.get('descricao', [''])[0]
- 
-            # Adiciona as turmas e obtém a lista atualizada
-            turmas = self.adicionar_turmas(codigo, descricao)
- 
-            with open('dados_turmas.txt', 'r', encoding='utf-8') as file:
-                lines = file.readlines()
-            
-            with open('dados_turmas.txt','w', encoding='utf-8') as file:
-                for line in lines:
-                    codigo, descricao = line.strip().split(';')
-                    line = f"{codigo};{descricao} \n"
-                    file.write(line)
 
-            if any(line.startswith(f"{codigo};") for line in open("dados_turmas.txt", "r", encoding="UTF-8")):
-                self.send_response(302)
-                self.send_header('Location', '/turma')
-                self.end_headers()
-                return
-        
-            else:            
-                self.adicionar_turmas(codigo,descricao)
-                self.send_response(302)
+            body = self.rfile.read(content_length).decode('utf-8')
+          
+            form_data = parse_qs(body)
+ 
+           
+            # verifica se o usuario já existe
+            login = form_data.get('codigo', [''])[0]
+            senha = form_data.get('descricao', [''])[0]
+           
+            if self.usuario_existente(login, senha):
+                with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as existe:
+                    content_file = existe.read()
+                mensagem = f"Turma e/ou atividade já cadastrada. Tente novamente!"
+                content = content_file.replace('<!-- Mensagem de autenticacao será inserida aqui -->',
+                                      f'<p>{mensagem}</p>')
+
+                self.send_response(200)
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
+            
+                self.wfile.write(content.encode('utf-8'))
+           
+            else:
+
+                if any(line.startswith(f"{login};") for line in open("dados_turmas.txt", "r", encoding="UTF-8")):
+                    self.send_response(302)
+                    self.send_header('Location', '/turma_failed')
+                    self.end_headers()
+                    return # adicionando um return para evitar a execução
+               
+                else:
+                    self.adicionar_turmas(login,senha)
+                    self.send_response(302)
+                    self.send_header('Location', '/login')
+                    self.end_headers()
+
                
         else:
             super(MyMandler,self).do_POST()
