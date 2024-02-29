@@ -10,7 +10,7 @@ class MyMandler(SimpleHTTPRequestHandler):
     def list_directory(self, path):
         
         try:
-            f = open(os.path.join(path, 'login.html'), 'r')
+            f = open(os.path.join(path, 'index.html'), 'r')
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
@@ -234,11 +234,14 @@ class MyMandler(SimpleHTTPRequestHandler):
                         if login == stored_login and senha_hash == stored_senha:
                             line = f"{login};{senha_hash};{nome}\n"
                         file.write(line)
+                    
+                    with open(os.path.join(os.getcwd(), 'tela_professor.html'),'r', encoding='utf-8') as file:
+                        content = file.read()
  
                     self.send_response(302)
                     self.send_header("Content-type", "text/html; charset=utf-8")
                     self.end_headers()
-                    self.wfile.write("Registro recebido com sucesso!!!". encode('utf-8'))
+                    self.wfile.write(content.encode('utf-8')) 
  
             else:
                     self.remover_ultima_linha('dados.login.txt')
