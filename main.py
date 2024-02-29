@@ -72,7 +72,24 @@ class MyMandler(SimpleHTTPRequestHandler):
                 content = login_file.read()
                
 
-            mensagem = " Turma e/ou atividade já cadastrada. Tente novamente!"
+            mensagem = " Turma já cadastrada. Tente novamente!"
+            content = content.replace('<!-- Mensagem de erro será inserida aqui -->',
+                                      f'<div class="error-message">{mensagem}</div>')
+           
+     
+            self.wfile.write(content.encode('utf-8')) 
+        
+        elif self.path == '/atividade_failed':
+
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+           
+
+            with open(os.path.join(os.getcwd(), 'cadastro_atividade.html'), 'r', encoding='utf-8') as login_file:
+                content = login_file.read()
+
+            mensagem = " Atividade já cadastrada. Tente novamente!"
             content = content.replace('<!-- Mensagem de erro será inserida aqui -->',
                                       f'<div class="error-message">{mensagem}</div>')
            
@@ -114,7 +131,17 @@ class MyMandler(SimpleHTTPRequestHandler):
             self.end_headers()
             with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as file:
                 content = file.read()
+            self.wfile.write(content.encode('utf-8')) 
+
+        elif self.path == '/atividade':
+            
+            self.send_response(200)
+            self.send_header("content-type","text/html; charset=utf-8")
+            self.end_headers()
+            with open(os.path.join(os.getcwd(), 'cadastro_atividade.html'), 'r', encoding='utf-8') as file:
+                content = file.read()
             self.wfile.write(content.encode('utf-8'))          
+        
 
         else:
 
@@ -143,6 +170,15 @@ class MyMandler(SimpleHTTPRequestHandler):
                     if codigo == cod:
                         return True
             return False
+    
+    def atividade_existente(self, codigo, descricao):
+            with open('dados_atividade.txt', 'r', encoding='utf-8') as file:
+                for line in file:
+                    if line.strip():
+                        disciplina, desc = line.strip().split(';')
+                    if codigo == disciplina:
+                        return True
+            return False
 
 # function to add an user
     
@@ -156,6 +192,11 @@ class MyMandler(SimpleHTTPRequestHandler):
     def adicionar_turmas(self, codigo, descricao):
         with open('dados_turmas.txt', 'a', encoding='utf-8') as files:
             files.write(f'{codigo};{descricao}\n')
+    
+    def adicionar_turmas(self, codigo, descricao):
+        with open('dados_atividade.txt', 'a', encoding='utf-8') as files:
+            files.write(f'{codigo};{descricao}\n')
+ 
  
 # function to remove a line
             
@@ -281,7 +322,7 @@ class MyMandler(SimpleHTTPRequestHandler):
             if self.usuario_existente(codigo, descricao):
                 with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as existe:
                     content_file = existe.read()
-                mensagem = f"Turma e/ou atividade já cadastrada. Tente novamente!"
+                mensagem = f"Turma já cadastrada. Tente novamente!"
                 content = content_file.replace('<!-- Mensagem de autenticacao será inserida aqui -->',
                                       f'<p>{mensagem}</p>')
 
@@ -301,6 +342,44 @@ class MyMandler(SimpleHTTPRequestHandler):
                
                 else:
                     self.adicionar_turmas(codigo,descricao)
+                    self.send_response(302)
+                    self.send_header('Location', '/login')
+                    self.end_headers()
+        
+        elif self.path == '/cad_atividade':           
+                 
+            content_length = int(self.headers['content-Length'])
+
+            body = self.rfile.read(content_length).decode('utf-8')
+          
+            form_data = parse_qs(body)
+ 
+            disciplina = form_data.get('disciplina', [''])[0]
+            descricao = form_data.get('descricao', [''])[0]
+           
+            if self.usuario_existente(disciplina, descricao):
+                with open(os.path.join(os.getcwd(), 'cadastro_atividade.html'), 'r', encoding='utf-8') as existe:
+                    content_file = existe.read()
+                mensagem = f"Atividade já cadastrada. Tente novamente!"
+                content = content_file.replace('<!-- Mensagem de autenticacao será inserida aqui -->',
+                                      f'<p>{mensagem}</p>')
+
+                self.send_response(200)
+                self.send_header("Content-type", "text/html; charset=utf-8")
+                self.end_headers()
+            
+                self.wfile.write(content.encode('utf-8'))
+           
+            else:
+
+                if any(line.startswith(f"{disciplina};") for line in open("dados_atividade.txt", "r", encoding="UTF-8")):
+                    self.send_response(302)
+                    self.send_header('Location', '/atividade_failed')
+                    self.end_headers()
+                    return 
+               
+                else:
+                    self.adicionar_turmas(disciplina,descricao)
                     self.send_response(302)
                     self.send_header('Location', '/login')
                     self.end_headers()

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro Turma</title>
+    <title>Cadastro Atividade</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,13 +11,13 @@
 
         <!-- Mensagem de erro será inserida aqui -->
 
-        <h2>Cadastre uma Turma</h2>
-        <form action="/cad_turma" method="post">
-            <label for="">Código Turma</label>
-            <input id="codigo" name="codigo" type="text"required>
-            <label for="">Turma</label>
+        <h2>Cadastre uma Atividade</h2>
+        <form action="/cad_atividade" method="post">
+            <label for="">Disciplina</label>
+            <input id="disciplina" name="disciplina" type="text"required>
+            <label for="">Descrição Atividade</label>
             <input id="descricao" name="descricao" type="text" required>
-            <button type="submit">Cadastrar Turma</button>
+            <button type="submit">Cadastrar Atividade</button>
         </form>
     </div>
 </body>
