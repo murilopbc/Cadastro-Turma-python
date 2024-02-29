@@ -168,6 +168,7 @@ class MyMandler(SimpleHTTPRequestHandler):
                     if line.strip():
                         cod, desc = line.strip().split(';')
                     if codigo == cod:
+                        print("Localizei turma")
                         return True
             return False
     
@@ -191,9 +192,10 @@ class MyMandler(SimpleHTTPRequestHandler):
               
     def adicionar_turmas(self, codigo, descricao):
         with open('dados_turmas.txt', 'a', encoding='utf-8') as files:
+            print("Armazenei turma")
             files.write(f'{codigo};{descricao}\n')
     
-    def adicionar_turmas(self, codigo, descricao):
+    def adicionar_atividade(self, codigo, descricao):
         with open('dados_atividade.txt', 'a', encoding='utf-8') as files:
             files.write(f'{codigo};{descricao}\n')
  
@@ -379,7 +381,7 @@ class MyMandler(SimpleHTTPRequestHandler):
                     return 
                
                 else:
-                    self.adicionar_turmas(disciplina,descricao)
+                    self.adicionar_atividade(disciplina,descricao)
                     self.send_response(302)
                     self.send_header('Location', '/login')
                     self.end_headers()
