@@ -170,6 +170,8 @@ class MyMandler(SimpleHTTPRequestHandler):
                 
     def do_POST(self):
 
+        # Rota para enviar o login
+
         if self.path == '/enviar_login':
  
             content_length = int(self.headers['content-Length'])
@@ -177,9 +179,13 @@ class MyMandler(SimpleHTTPRequestHandler):
             body = self.rfile.read(content_length).decode('utf-8')
           
             form_data = parse_qs(body)
+
+            # Acessa os dados do login
  
             login = form_data.get('email', [''])[0]
             senha = form_data.get('senha', [''])[0]
+
+            # Caso o usuário já exista, a página 'tela_professor.html' é carregada
            
             if self.usuario_existente(login, senha):
                 with open(os.path.join(os.getcwd(), 'tela_professor.html'), 'r', encoding='utf-8') as existe:
@@ -196,6 +202,8 @@ class MyMandler(SimpleHTTPRequestHandler):
            
             else:
 
+                # Lógica para a rota '/login_failed' caso email/senha esteja incorreto
+
                 if any(line.startswith(f"{login};") for line in open("dados.login.txt", "r", encoding="UTF-8")):
                     self.send_response(302)
                     self.send_header('Location', '/login_failed')
@@ -203,11 +211,16 @@ class MyMandler(SimpleHTTPRequestHandler):
                     return
                
                 else:
+
+                # Adiciona um novo usuário no txt
+                    
                     self.adicionar_usuario(login,senha, nome='None')
                     self.send_response(302)
                     self.send_header('Location', f'novo_cadastro?login={login}&senha={senha}')
                     self.end_headers()
                 return
+            
+        # Lógica quando há novo usuário
  
         elif   self.path.startswith('/confirmar_cadastro'):
             
@@ -220,6 +233,8 @@ class MyMandler(SimpleHTTPRequestHandler):
             login = from_data.get('email', [''])[0]
             senha = from_data.get('senha', [''])[0]
             nome = from_data.get('nome', [''])[0]
+
+            # Criptografar a senha
  
             senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest()
  
@@ -249,6 +264,8 @@ class MyMandler(SimpleHTTPRequestHandler):
                     self.send_header("Content-type", "text/html; charset=utf-8")
                     self.end_headers()
                     self.wfile.write("A senha não confere.Retome o procedimento!". encode('utf-8'))
+        
+        # Lógica para cadastrar um turma
 
         elif self.path == '/cad_turma':           
                  
@@ -290,6 +307,8 @@ class MyMandler(SimpleHTTPRequestHandler):
                
         else:
             super(MyMandler,self).do_POST()
+
+# Criação do Servidor
 
 endereco_ip = "0.0.0.0"
 porta = 8000
