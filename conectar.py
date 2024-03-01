@@ -6,5 +6,5 @@ def conectar():
         host="localhost",
         user="root",
         password="senai",
-        database='pwbe-escola'
+        database='pwbe_escola'
     )
