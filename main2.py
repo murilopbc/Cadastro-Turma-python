@@ -153,36 +153,36 @@ class MyMandler(SimpleHTTPRequestHandler):
 # check if the user already exists 
             
     def usuario_existente(self, login, senha):
-            
-            cursor = conexao.cursor()
-            cursor.execute("SELECT senha FROM dados_login WHERE login = %s", (login,))
-            resultado = cursor.fetchone()
-            cursor.close()
-            if resultado:
-                # criptography the password
-                senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest()
-                return senha_hash == resultado[0]
-            return False
+        cursor = conexao.cursor()
+        cursor.execute("SELECT senha FROM dados_login WHERE login = %s", (login,))
+        resultado = cursor.fetchone()
+        cursor.close()
+        if resultado:
+            # criptography the password
+            senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest()
+            return senha_hash == resultado[0]
+        return False
 
 # check if the class already exists
     
-    def turma_existente(self, codigo, descricao):
-            with open('dados_turmas.txt', 'r', encoding='utf-8') as file:
-                for line in file:
-                    if line.strip():
-                        cod, desc = line.strip().split(';')
-                    if codigo == cod:
-                        return True
-            return False
+    def turma_existente(self, descricao):
+        cursor = conexao.cursor()
+        cursor.execute("SELECT descricao FROM turmas WHERE descricao = %s", (descricao,))
+        resultado = cursor.fetchone()
+        cursor.close()
+        if resultado:
+            return True
+        return False
     
-    def atividade_existente(self, codigo, descricao):
-            with open('dados_atividade.txt', 'r', encoding='utf-8') as file:
-                for line in file:
-                    if line.strip():
-                        disciplina, desc = line.strip().split(';')
-                    if codigo == disciplina:
-                        return True
-            return False
+    def atividade_existente(self, descricao):
+        cursor = conexao.cursor()
+        cursor.execute("SELECT descricao FROM atividades WHERE descricao = %s", (descricao,))
+        resultado = cursor.fetchone()
+        cursor.close()
+        if resultado:
+            return True
+        return False
+            
 
 # function to add an user
     
@@ -195,13 +195,17 @@ class MyMandler(SimpleHTTPRequestHandler):
 
 # function to add a class
               
-    def adicionar_turmas(self, codigo, descricao):
-        with open('dados_turmas.txt', 'a', encoding='utf-8') as files:
-            files.write(f'{codigo};{descricao}\n')
+    def adicionar_turmas(self, descricao):
+        cursor = conexao.cursor()
+        cursor.execute("INSERT INTO turmas (descricao) VALUES (%s)", (descricao,))
+        conexao.commit()
+        cursor.close()
     
-    def adicionar_atividade(self, codigo, descricao):
-        with open('dados_atividade.txt', 'a', encoding='utf-8') as files:
-            files.write(f'{codigo};{descricao}\n')
+    def adicionar_atividade(self, descricao):
+        cursor = conexao.cursor()
+        cursor.execute("INSERT INTO atividades (descricao) VALUES (%s)", (descricao,))
+        conexao.commit()
+        cursor.close()
  
  
 # function to remove a line
@@ -253,7 +257,7 @@ class MyMandler(SimpleHTTPRequestHandler):
 
                 cursor = conexao.cursor()
                 cursor.execute("SELECT login FROM dados_login WHERE login = %s", (login,))
-                resultado =cursor.fetchone()
+                resultado = cursor.fetchone()
 
                 if resultado:
 
@@ -305,10 +309,9 @@ class MyMandler(SimpleHTTPRequestHandler):
           
             form_data = parse_qs(body)
  
-            codigo = form_data.get('codigo', [''])[0]
             descricao = form_data.get('descricao', [''])[0]
            
-            if self.usuario_existente(codigo, descricao):
+            if self.turma_existente(descricao):
                 with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as existe:
                     content_file = existe.read()
                 mensagem = f"Turma já cadastrada. Tente novamente!"
@@ -323,17 +326,26 @@ class MyMandler(SimpleHTTPRequestHandler):
            
             else:
 
-                if any(line.startswith(f"{codigo};") for line in open("dados_turmas.txt", "r", encoding="UTF-8")):
+                cursor = conexao.cursor()
+                cursor.execute("SELECT descricao FROM turmas WHERE descricao = %s", (descricao,))
+                resultado = cursor.fetchone()
+
+                if resultado:
+
                     self.send_response(302)
                     self.send_header('Location', '/turma_failed')
                     self.end_headers()
-                    return 
+                    cursor.close()
+                    return
                
                 else:
-                    self.adicionar_turmas(codigo,descricao)
+
+                    self.adicionar_turmas(descricao)
                     self.send_response(302)
                     self.send_header('Location', '/login')
                     self.end_headers()
+                    cursor.close()
+                    return
         
         elif self.path == '/cad_atividade':           
                  
@@ -343,10 +355,9 @@ class MyMandler(SimpleHTTPRequestHandler):
           
             form_data = parse_qs(body)
  
-            disciplina = form_data.get('disciplina', [''])[0]
             descricao = form_data.get('descricao', [''])[0]
            
-            if self.usuario_existente(disciplina, descricao):
+            if self.atividade_existente(descricao):
                 with open(os.path.join(os.getcwd(), 'cadastro_atividade.html'), 'r', encoding='utf-8') as existe:
                     content_file = existe.read()
                 mensagem = f"Atividade já cadastrada. Tente novamente!"
@@ -361,17 +372,26 @@ class MyMandler(SimpleHTTPRequestHandler):
            
             else:
 
-                if any(line.startswith(f"{disciplina};") for line in open("dados_atividade.txt", "r", encoding="UTF-8")):
+                cursor = conexao.cursor()
+                cursor.execute("SELECT descricao FROM atividades WHERE descricao = %s", (descricao,))
+                resultado = cursor.fetchone()
+
+                if resultado:
+
                     self.send_response(302)
                     self.send_header('Location', '/atividade_failed')
                     self.end_headers()
-                    return 
+                    cursor.close()
+                    return
                
                 else:
-                    self.adicionar_atividade(disciplina,descricao)
+                    
+                    self.adicionar_atividade(descricao)
                     self.send_response(302)
                     self.send_header('Location', '/login')
                     self.end_headers()
+                    cursor.close()
+                    return
                
         else:
             super(MyMandler,self).do_POST()
