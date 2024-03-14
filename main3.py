@@ -334,6 +334,16 @@ class MyMandler(SimpleHTTPRequestHandler):
             self.wfile.write("Registro Recebido com Sucesso".encode('utf-8')) 
         
         # Lógica para cadastrar um turma
+        elif self.path.startswith ('/abri_turma'):
+            with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as existe:
+                    content_file = existe.read()
+
+
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(content.encode('utf-8'))
+
 
         elif self.path == '/cad_turma':           
                  
