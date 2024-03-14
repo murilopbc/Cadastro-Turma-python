@@ -128,13 +128,8 @@ class MyMandler(SimpleHTTPRequestHandler):
 # open and read 'cadastro_turma.html' file
               
         elif self.path == '/turma':
+            self.carrega_turmas_professor(login)
             
-            self.send_response(200)
-            self.send_header("content-type","text/html; charset=utf-8")
-            self.end_headers()
-            with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as file:
-                content = file.read()
-            self.wfile.write(content.encode('utf-8')) 
 
         elif self.path == '/atividade':
             
@@ -199,7 +194,7 @@ class MyMandler(SimpleHTTPRequestHandler):
         cursor.execute("INSERT INTO turmas (descricao) VALUES (%s)", (descricao,))
         cursor.execute("SELECT id_turma FROM turmas WHERE descricao = %s", (descricao,))
         resultado = cursor.fetchone()
-        cursor.execute("INSERT INTO turmas_professor (id_turma, id_professor) VALUES (%s, %s)", (resultado[0], id_professor))
+        cursor.execute("INSERT INTO turmas_professor (id_professor, id_turma) VALUES (%s, %s)", (id_professor, resultado[0],))
         conexao.commit()
         cursor.close()
     
@@ -212,7 +207,7 @@ class MyMandler(SimpleHTTPRequestHandler):
         id_professor = resultado[0]
 
         cursor = conexao.cursor()
-        cursor.execute("SELECT turmas.id_turma, turmas.descricao FROM turmas_professor INNER JOIN turmas ON turmas_professor.id_turma = turmas.id_turma WHERE turmas_professor.id_professor = %s",(id_professor))
+        cursor.execute("SELECT turmas.id_turma, turmas.descricao FROM turmas_professor INNER JOIN turmas ON turmas_professor.id_turma = turmas.id_turma WHERE turmas_professor.id_professor = %s",(id_professor,))
         turmas = cursor.fetchall()
         cursor.close()
 
@@ -220,7 +215,8 @@ class MyMandler(SimpleHTTPRequestHandler):
         for turma in turmas:
             id_turma = turma[0]
             descricao_turma = turma[1]
-            linha = "<tr><td style='text-align:center'>{}</td><td style='text-align:center'>{}</td></tr>".format(descricao_turma)
+            linha = "<tr><td style='text-align:center'>{}</td>".format(descricao_turma)
+
             linhas_tabela += linha
 
         
@@ -286,8 +282,8 @@ class MyMandler(SimpleHTTPRequestHandler):
                 self.end_headers()
             
                 self.wfile.write(content.encode('utf-8'))
-    
-                self.carrega_turmas_professor(login)
+                
+                
                 
             else:
 
@@ -354,6 +350,7 @@ class MyMandler(SimpleHTTPRequestHandler):
             login = form_data.get('login', [''])[0]
 
             print(f"Cadastro turma, dados do formulário {descricao}{id_professor}")
+            print("estou chegando até aqui em cad turma")
 
             self.adicionar_turmas(descricao, id_professor)
 
@@ -388,7 +385,7 @@ class MyMandler(SimpleHTTPRequestHandler):
                
                 else:
 
-                    self.adicionar_turmas(descricao)
+                    self.adicionar_turmas(descricao, id_professor)
                     self.send_response(302)
                     self.send_header('Location', '/login')
                     self.end_headers()
