@@ -1,41 +1,90 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: lightgray;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+}
+
+.cadastro-turma-container {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+form input,
+form button {
+  margin-bottom: 10px;
+  padding: 10px;
+  width: calc(100% - 22px);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+form button {
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+}
+
+form button:hover {
+  background-color: #0056b3;
+}
+
+.responsive-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.responsive-table th,
+.responsive-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.responsive-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+@media only screen and (max-width: 600px) {
+  .responsive-table {
+      border: 0;
   }
 
-  .login-container, .cadastro-turma-container {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px black;
-    padding: 20px;
-    width: 300px;
-    text-align: center;
+  .responsive-table thead {
+      display: none;
   }
 
-  .login-container h2, .cadastro-turma-container h2 {
-    color: black;
+  .responsive-table tr {
+      border-bottom: 2px solid #ddd;
+      display: block;
+      margin-bottom: 20px;
   }
 
-  .login-container input, .cadastro-turma-container input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    box-sizing: border-box;
+  .responsive-table td {
+      border-bottom: none;
+      display: block;
+      text-align: right;
   }
 
-  .login-container button, .cadastro-turma-container button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 20px;
-    box-sizing: border-box;
-    background-color: #4caf50;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
+  .responsive-table td:last-child {
+      border-bottom: 1px solid #ddd;
   }
+
+  .responsive-table td:before {
+      content: attr(data-label);
+      float: left;
+      font-weight: bold;
+  }
+}
