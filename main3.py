@@ -9,7 +9,7 @@ conexao = conectar()
  
 # Class MyHandler = Try to open 'login.html' file
 
-class MyMandler(SimpleHTTPRequestHandler):
+class MyHandler(SimpleHTTPRequestHandler):
     def list_directory(self, path):
         
         try:
@@ -128,7 +128,13 @@ class MyMandler(SimpleHTTPRequestHandler):
 # open and read 'cadastro_turma.html' file
               
         elif self.path == '/turma':
-            self.carrega_turmas_professor(login)
+            self.send_response(200)
+            self.send_header("content-type","text/html; charset=utf-8")
+            self.end_headers()
+            with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as file:
+                content = file.read()
+            self.wfile.write(content.encode('utf-8')) 
+        
             
 
         elif self.path == '/atividade':
@@ -271,17 +277,7 @@ class MyMandler(SimpleHTTPRequestHandler):
             # Caso o usuário já exista, a página 'tela_professor.html' é carregada
            
             if self.usuario_existente(login, senha):
-                with open(os.path.join(os.getcwd(), 'tela_professor.html'), 'r', encoding='utf-8') as existe:
-                    content_file = existe.read()
-                mensagem = f"Olá professor {login}"
-                content = content_file.replace('<!-- Mensagem de autenticacao será inserida aqui -->',
-                                      f'<p>{mensagem}</p>')
-
-                self.send_response(200)
-                self.send_header("Content-type", "text/html; charset=utf-8")
-                self.end_headers()
-            
-                self.wfile.write(content.encode('utf-8'))
+                self.carrega_turmas_professor(login)
                 
                 
                 
@@ -449,7 +445,7 @@ class MyMandler(SimpleHTTPRequestHandler):
                     return
                
         else:
-            super(MyMandler,self).do_POST()
+            super(MyHandler,self).do_POST()
 
 # Criação do Servidor
 
@@ -457,7 +453,7 @@ endereco_ip = "0.0.0.0"
 porta = 8000
  
 
-with socketserver.TCPServer((endereco_ip, porta), MyMandler) as httpd:
+with socketserver.TCPServer((endereco_ip, porta), MyHandler) as httpd:
     print(f"Servidor iniciando em {endereco_ip}:{porta}")
     httpd.serve_forever()
  
