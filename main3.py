@@ -221,7 +221,7 @@ class MyHandler(SimpleHTTPRequestHandler):
         for turma in turmas:
             id_turma = turma[0]
             descricao_turma = turma[1]
-            linha = "<tr><td style='text-align:center'>{}</td>".format(descricao_turma)
+            linha = "<tr><td style='text-align:center'>{}</td></tr>".format(descricao_turma)
 
             linhas_tabela += linha
 
@@ -279,8 +279,6 @@ class MyHandler(SimpleHTTPRequestHandler):
             if self.usuario_existente(login, senha):
                 self.carrega_turmas_professor(login)
                 
-                
-                
             else:
 
                 # Lógica para a rota '/login_failed' caso email/senha esteja incorreto
@@ -328,18 +326,6 @@ class MyHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write("Registro Recebido com Sucesso".encode('utf-8')) 
-        
-        # Lógica para cadastrar um turma
-        elif self.path.startswith ('/abri_turma'):
-            with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as existe:
-                    content_file = existe.read()
-
-
-            self.send_response(200)
-            self.send_header("Content-type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(content.encode('utf-8'))
-
 
         elif self.path == '/cad_turma':           
                  
@@ -355,57 +341,23 @@ class MyHandler(SimpleHTTPRequestHandler):
 
             login = form_data.get('login', [''])[0]
 
-            print(f"Cadastro turma, dados do formulário {descricao}{id_professor}")
-            print("estou chegando até aqui em cad turma")
-
-            self.adicionar_turmas(descricao, id_professor)
-
-            self.carrega_turmas_professor(login)
-
             if self.turma_existente(descricao):
-                with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as existe:
-                    content_file = existe.read()
-                mensagem = f"Turma já cadastrada. Tente novamente!"
-                content = content_file.replace('<!-- Mensagem de autenticacao será inserida aqui -->',
-                                      f'<p>{mensagem}</p>')
-
-                self.send_response(200)
-                self.send_header("Content-type", "text/html; charset=utf-8")
-                self.end_headers()
-            
-                self.wfile.write(content.encode('utf-8'))
+                self.carrega_turmas_professor(login)
            
             else:
+                self.adicionar_turmas(descricao, id_professor)
+
+                self.carrega_turmas_professor(login)
 
                 cursor = conexao.cursor()
                 cursor.execute("SELECT descricao FROM turmas WHERE descricao = %s", (descricao,))
                 resultado = cursor.fetchone()
 
-                if resultado:
-
-                    self.send_response(302)
-                    self.send_header('Location', '/turma_failed')
-                    self.end_headers()
-                    cursor.close()
-                    return
-               
-                else:
-
-                    self.adicionar_turmas(descricao, id_professor)
-                    self.send_response(302)
-                    self.send_header('Location', '/login')
-                    self.end_headers()
-                    cursor.close()
-                    return
-        
         elif self.path == '/cad_atividade':           
                  
             content_length = int(self.headers['content-Length'])
-
             body = self.rfile.read(content_length).decode('utf-8')
-          
             form_data = parse_qs(body)
- 
             descricao = form_data.get('descricao', [''])[0]
            
             if self.atividade_existente(descricao):
