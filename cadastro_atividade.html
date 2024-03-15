@@ -11,11 +11,19 @@
 
         <!-- Mensagem de erro será inserida aqui -->
 
+        <h4>Atividades da turma: </h4>
+        <h3>{nome_turma}</h3>
+
         <h2>Cadastre uma Atividade</h2>
         <form action="/cad_atividade" method="post">
             <input id="descricao" name="descricao" placeholder="ex:DS8"  type="text" required>
+            <input type="hidden" id="id_turma" name="id_turma" value="{id_turma}">
+            <input type="hidden" id="login" name="login" value="{login}">
             <button type="submit">Cadastrar Atividade</button>
         </form>
     </div>
+    <table>
+        <!-- Tabela com linhas zebradas -->
+    </table>
 </body>
 </html>

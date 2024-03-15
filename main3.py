@@ -203,6 +203,15 @@ class MyHandler(SimpleHTTPRequestHandler):
         cursor.execute("INSERT INTO turmas_professor (id_professor, id_turma) VALUES (%s, %s)", (id_professor, resultado[0],))
         conexao.commit()
         cursor.close()
+
+    def adicionar_atividade(self, descricao, id_turma):
+        cursor = conexao.cursor()
+        cursor.execute("INSERT INTO atividades (descricao) VALUES (%s)", (descricao,))
+        cursor.execute("SELECT id_atividade FROM atividades WHERE descricao = %s", (descricao,))
+        resultado = cursor.fetchone()
+        cursor.execute("INSERT INTO atividades_turma (id_turma, id_atividade) VALUES (%s, %s)", (id_turma, resultado[0],))
+        conexao.commit()
+        cursor.close()
     
     def carrega_turmas_professor(self, login):
         cursor = conexao.cursor()
@@ -238,22 +247,41 @@ class MyHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-type", "text/html; charset=utf-8")
         self.end_headers()
         self.wfile.write(content.encode('utf-8'))
-    
-    def adicionar_atividade(self, descricao):
+
+    def carrega_atividades_turma(self, login):
         cursor = conexao.cursor()
-        cursor.execute("INSERT INTO atividades (descricao) VALUES (%s)", (descricao,))
-        conexao.commit()
+        cursor.execute("SELECT id_turma, descricao FROM turmas WHERE descricao = %s", (login,))
+        resultado = cursor.fetchone()
         cursor.close()
- 
- 
-# function to remove a line
-            
-    def remover_ultima_linha(self,arquivo):
-        print("Vou excluir ultima linha")
-        with open(arquivo, 'r', encoding='utf-8') as file:
-            lines = file.readlines()
-            with open(arquivo, 'w', encoding='utf-8') as file:
-                file.writelines(lines[:-1])
+
+        id_turma = resultado[0]
+
+        cursor = conexao.cursor()
+        cursor.execute("SELECT atividades.id_atividade, atividades.descricao FROM atividades_turma INNER JOIN atividades ON atividades_turma.id_atividade = atividades.id_atividade WHERE atividades_turma.id_turma = %s",(id_turma,))
+        atividades = cursor.fetchall()
+        cursor.close()
+
+        linhas_tabela = ""
+        for atividade in atividades:
+            id_atividade = atividade[0]
+            descricao_atividade = atividade[1]
+            linha = "<tr><td style='text-align:center'>{}</td></tr>".format(descricao_atividade)
+
+            linhas_tabela += linha
+
+        
+        with open(os.path.join(os.getcwd(), 'cadastro_atividade.html'), 'r', encoding='utf-8') as cad_atividade_file:
+            content = cad_atividade_file.read()
+
+            content = content.replace('{nome_turma}', resultado[1])
+            content = content.replace('{id_turma}', str(id_turma))
+            content = content.replace('{login}', str(login))
+
+        content = content.replace('<!-- Tabela com linhas zebradas -->', linhas_tabela)
+        self.send_response(200)
+        self.send_header("Content-type", "text/html; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(content.encode('utf-8'))
  
 # POST function
                 
@@ -274,14 +302,11 @@ class MyHandler(SimpleHTTPRequestHandler):
             login = form_data.get('email', [''])[0]
             senha = form_data.get('senha', [''])[0]
 
-            # Caso o usuário já exista, a página 'tela_professor.html' é carregada
-           
+        
             if self.usuario_existente(login, senha):
                 self.carrega_turmas_professor(login)
                 
             else:
-
-                # Lógica para a rota '/login_failed' caso email/senha esteja incorreto
 
                 cursor = conexao.cursor()
                 cursor.execute("SELECT login FROM dados_login WHERE login = %s", (login,))
@@ -356,45 +381,31 @@ class MyHandler(SimpleHTTPRequestHandler):
         elif self.path == '/cad_atividade':           
                  
             content_length = int(self.headers['content-Length'])
-            body = self.rfile.read(content_length).decode('utf-8')
-            form_data = parse_qs(body)
-            descricao = form_data.get('descricao', [''])[0]
-           
-            if self.atividade_existente(descricao):
-                with open(os.path.join(os.getcwd(), 'cadastro_atividade.html'), 'r', encoding='utf-8') as existe:
-                    content_file = existe.read()
-                mensagem = f"Atividade já cadastrada. Tente novamente!"
-                content = content_file.replace('<!-- Mensagem de autenticacao será inserida aqui -->',
-                                      f'<p>{mensagem}</p>')
 
-                self.send_response(200)
-                self.send_header("Content-type", "text/html; charset=utf-8")
-                self.end_headers()
-            
-                self.wfile.write(content.encode('utf-8'))
+            body = self.rfile.read(content_length).decode('utf-8')
+
+            form_data = parse_qs(body, keep_blank_values=True)
+
+            descricao = form_data.get('descricao', [''])[0]
+
+            id_turma = form_data.get('id_turma', [''])[0]
+
+            login = form_data.get('login', [''])[0]
+
+            if self.atividade_existente(descricao):
+
+                self.carrega_atividades_turma(login)
            
             else:
+
+                self.adicionar_atividade(descricao, id_turma)
+
+                self.carrega_atividades_turma(login)
 
                 cursor = conexao.cursor()
                 cursor.execute("SELECT descricao FROM atividades WHERE descricao = %s", (descricao,))
                 resultado = cursor.fetchone()
 
-                if resultado:
-
-                    self.send_response(302)
-                    self.send_header('Location', '/atividade_failed')
-                    self.end_headers()
-                    cursor.close()
-                    return
-               
-                else:
-                    
-                    self.adicionar_atividade(descricao)
-                    self.send_response(302)
-                    self.send_header('Location', '/login')
-                    self.end_headers()
-                    cursor.close()
-                    return
                
         else:
             super(MyHandler,self).do_POST()
